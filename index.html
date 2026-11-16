@@ -77,8 +77,11 @@ header.hero{padding:28px 0 12px;text-align:center}
 dialog#viewer{border:0;padding:0;border-radius:var(--radius);width:min(96vw,900px);max-height:94vh;background:var(--cream);color:var(--text)}
 dialog#viewer::backdrop{background:rgba(40,28,22,.75)}
 .vbody{display:grid;gap:12px;padding:12px;max-height:94vh;overflow:auto}
-.vimg{background:var(--seal);border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:200px}
+.vimg{position:relative;background:var(--seal);border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:200px}
 .vimg img{max-width:100%;max-height:70vh;display:block;border-radius:12px}
+.vimg img.v-in{animation:v-in .28s ease}
+@keyframes v-in{from{opacity:.7}to{opacity:1}}
+.vwait{position:absolute;right:10px;bottom:10px;font-size:.78rem;background:rgba(78,56,45,.72);color:#fff;padding:2px 8px;border-radius:99px;pointer-events:none}
 .vbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
 footer{padding:20px 0 30px;text-align:center;font-size:.78rem;color:var(--muted)}
 </style>
@@ -131,14 +134,14 @@ footer{padding:20px 0 30px;text-align:center;font-size:.78rem;color:var(--muted)
         <button type="button" class="small" id="vClose" aria-label="關閉">關閉</button>
       </span>
     </div>
-    <div class="vimg"><img id="vImg" alt=""></div>
+    <div class="vimg"><img id="vImg" alt=""><span id="vWait" class="vwait" hidden>載入中…</span></div>
   </div>
 </dialog>
 
 <footer class="wrap">
-  <div>作者：帥　修改日期：2026-11-16 20:45</div>
+  <div>作者：帥　修改日期：2026-11-16 20:54</div>
   <div>製作日期：2026-11-14 09:03　·　GROK 輔助</div>
-  <div>更新：拿掉留言功能、生日防呆、網站圖示</div>
+  <div>更新：拿掉留言功能、生日防呆、網站圖示、看照片更順</div>
 </footer>
 
 <script>
@@ -293,8 +296,19 @@ function updateProgress(){
 var ticking = false;
 window.addEventListener('scroll', function(){ if (!ticking) { ticking = true; requestAnimationFrame(function(){ ticking = false; updateProgress(); }); } }, { passive: true });
 
-/* ---------- 大圖 ---------- */
-var dlg = $('viewer');
+/* ---------- 大圖：先顯示已快取縮圖，再換成中大圖；預載上下張；舊請求不可蓋掉新照片 ---------- */
+var dlg = $('viewer'), viewGen = 0;
+function prefetch(id, w){
+  var im = new Image();
+  im.decoding = 'async';
+  im.src = thumbUrl(id, w);
+  im.onerror = function(){ if (!im.dataset.f) { im.dataset.f = 1; im.src = altUrl(id, w); } };
+}
+function prefetchAround(){
+  if (cur > 0) { prefetch(photos[cur - 1].id, 400); prefetch(photos[cur - 1].id, 1600); }
+  if (cur < photos.length - 1) { prefetch(photos[cur + 1].id, 400); prefetch(photos[cur + 1].id, 1600); }
+}
+function showWait(on){ var w = $('vWait'); if (w) w.hidden = !on; }
 function openViewer(id){
   cur = photos.findIndex(function(p){ return p.id === id; });
   if (cur < 0) return;
@@ -303,13 +317,66 @@ function openViewer(id){
 }
 function showCur(){
   var p = photos[cur]; if (!p) return;
-  var img = $('vImg'); img.removeAttribute('data-f');
+  var gen = ++viewGen, img = $('vImg'), done = false;
+  function still(){ return gen === viewGen; }
   img.alt = C.CAT_NAME + ' ' + fmtDate(p.date) + ' 的大圖';
-  img.src = thumbUrl(p.id, 1600);
-  img.onerror = function(){ if (!img.dataset.f) { img.dataset.f = 1; img.src = altUrl(p.id, 1600); } };
+  img.decoding = 'async';
   var age = ageLabel(p.date);
   $('vDate').textContent = fmtDate(p.date) + (age ? '・' + age : '') + (p.src === 'upload' ? '（上傳日）' : '');
   $('vPrev').disabled = cur <= 0; $('vNext').disabled = cur >= photos.length - 1;
+
+  var small = thumbUrl(p.id, 400), large = thumbUrl(p.id, 1600);
+  var smallAlt = altUrl(p.id, 400), largeAlt = altUrl(p.id, 1600);
+  var curSrc = img.getAttribute('src') || '';
+  var alreadyLarge = (curSrc === large || curSrc === largeAlt);
+
+  img.onload = null;
+  img.onerror = null;
+  img.classList.remove('v-in');
+  if (!alreadyLarge) {
+    img.removeAttribute('data-f');
+    if (curSrc !== small && curSrc !== smallAlt) img.src = small;
+    img.onerror = function(){
+      if (!still() || done || img.dataset.f) return;
+      img.dataset.f = 1;
+      img.src = smallAlt;
+    };
+    showWait(true);
+  } else {
+    showWait(false);
+  }
+
+  function useLarge(src){
+    if (!still() || done) return;
+    done = true;
+    function finish(){
+      if (!still()) return;
+      showWait(false);
+      img.classList.remove('v-in');
+      void img.offsetWidth;
+      img.classList.add('v-in');
+    }
+    if ((img.getAttribute('src') || '') !== src) {
+      img.onload = function(){ finish(); };
+      img.onerror = function(){ if (still()) showWait(false); };
+      img.src = src;
+      if (img.complete) finish();
+    } else {
+      finish();
+    }
+  }
+  var hi = new Image();
+  hi.decoding = 'async';
+  hi.onload = function(){ useLarge(hi.src); };
+  hi.onerror = function(){
+    if (!still()) return;
+    if (!hi.dataset.f) { hi.dataset.f = 1; hi.src = largeAlt; return; }
+    showWait(false);
+  };
+  hi.src = large;
+  if (hi.complete && hi.naturalWidth) useLarge(hi.src);
+
+  prefetchAround();
 }
 function closeViewer(){ if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
 $('vClose').onclick = closeViewer;
