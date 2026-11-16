@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>嘎逼的成長相簿</title>
+<meta name="description" content="布偶貓嘎逼從小到大的照片">
+<script>
+/* ======================================================================
+   ★★★ CONFIG 設定區：只要改這裡 ★★★
+   1. DRIVE_FOLDER_ID：Google 雲端「嘎逼」資料夾網址最後那串
+      例：https://drive.google.com/drive/folders/【這一串】
+   2. DRIVE_API_KEY：Google Cloud 建立的 API 金鑰（只限 Drive API＋只限本站網址）
+   3. CAT_BIRTHDAY：嘎逼生日（YYYY-MM-DD，例 2024-11-01，不可晚於今天），不知道就留空 ''
+   這些值本來就會公開在網頁上，不是密碼；安全靠「金鑰限制」。
+   ====================================================================== */
+window.GABI_CONFIG = {
+  CAT_NAME: '嘎逼',
+  CAT_BIRTHDAY: '',
+  DRIVE_FOLDER_ID: '144XAFOFAeT4T9swXKIYP1bJZWtyt8LqB',
+  DRIVE_API_KEY: 'AIzaSyCivaJs9lPwrAMRcnqS06j0OqZa9NarctA'
+};
+/* ===================== CONFIG 結束，下面不用改 ===================== */
+</script>
+<style>
+:root{
+  --cream:#fbf6ee; --cream2:#f3e7d6; --fawn:#e6d3bb;
+  --seal:#4e382d; --choc:#7d5e4b; --mink:#a88a74;
+  --blue:#5b8fc7; --blue-l:#cfe2f3; --blue-d:#2f5f93;
+  --text:#3b2b22; --muted:#6f5a4c; --danger:#a3362c;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; color:var(--text); line-height:1.6;
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  background-color:var(--cream);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(207,226,243,.55) 0 120px, transparent 121px),
+    radial-gradient(circle at 92% 30%, rgba(230,211,187,.6) 0 160px, transparent 161px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%237d5e4b' fill-opacity='.07'%3E%3Cellipse cx='30' cy='38' rx='9' ry='7'/%3E%3Ccircle cx='19' cy='26' r='4'/%3E%3Ccircle cx='27' cy='21' r='4'/%3E%3Ccircle cx='36' cy='22' r='4'/%3E%3Ccircle cx='42' cy='29' r='4'/%3E%3Cellipse cx='88' cy='96' rx='9' ry='7'/%3E%3Ccircle cx='77' cy='84' r='4'/%3E%3Ccircle cx='85' cy='79' r='4'/%3E%3Ccircle cx='94' cy='80' r='4'/%3E%3Ccircle cx='100' cy='87' r='4'/%3E%3C/g%3E%3C/svg%3E");
+  overflow-x:hidden;
+}
+a{color:var(--blue-d)}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:.55em 1.1em;background:var(--seal);color:#fff;min-height:44px}
+button.ghost{background:transparent;color:var(--seal);border:1.5px solid var(--choc)}
+button.small{min-height:34px;padding:.3em .8em;font-size:.88rem}
+button:focus-visible,.thumb:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header.hero{padding:28px 0 12px;text-align:center}
+.hero svg{width:min(220px,60vw);height:auto;display:block;margin:0 auto}
+.hero h1{margin:.3em 0 .1em;font-size:clamp(1.6rem,6vw,2.4rem);color:var(--seal);letter-spacing:.08em}
+.hero p{margin:0;color:var(--muted)}
+.progress{position:sticky;top:0;z-index:5;background:rgba(251,246,238,.93);backdrop-filter:blur(6px);border-bottom:1px solid var(--fawn)}
+.progress .wrap{display:flex;align-items:center;gap:12px;padding-top:8px;padding-bottom:8px;font-size:.92rem}
+.bar{flex:1;height:8px;border-radius:99px;background:var(--cream2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mink),var(--blue));transition:width .2s}
+#nowLabel{white-space:nowrap;color:var(--seal);font-weight:600}
+.status{margin:18px auto;padding:14px 16px;border-radius:var(--radius);background:#fff;border:1.5px dashed var(--mink);color:var(--muted);text-align:center}
+.status.err{border-color:var(--danger);color:var(--danger);background:#fff7f5}
+.timeline{position:relative;margin:20px 0 40px;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:7px;top:0;bottom:0;width:3px;border-radius:3px;background:linear-gradient(var(--fawn),var(--choc))}
+.month{position:relative;margin-bottom:28px}
+.month::before{content:"";position:absolute;left:-21px;top:.55em;width:13px;height:13px;border-radius:50%;background:var(--blue);border:3px solid var(--cream)}
+.month h2{margin:0 0 10px;font-size:1.15rem;color:var(--seal)}
+.month h2 small{font-weight:400;color:var(--choc);margin-left:.4em}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:768px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.timeline{padding-left:34px}.month::before{left:-33px}}
+.thumb{position:relative;display:block;width:100%;padding:0;border-radius:12px;overflow:hidden;background:var(--cream2);aspect-ratio:1/1;border:0;min-height:0}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .d{position:absolute;left:6px;bottom:6px;font-size:.75rem;background:rgba(78,56,45,.72);color:#fff;padding:1px 7px;border-radius:99px}
+dialog#viewer{border:0;padding:0;border-radius:var(--radius);width:min(96vw,900px);max-height:94vh;background:var(--cream);color:var(--text)}
+dialog#viewer::backdrop{background:rgba(40,28,22,.75)}
+.vbody{display:grid;gap:12px;padding:12px;max-height:94vh;overflow:auto}
+.vimg{background:var(--seal);border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:200px}
+.vimg img{max-width:100%;max-height:70vh;display:block;border-radius:12px}
+.vbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+footer{padding:20px 0 30px;text-align:center;font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="hero wrap">
+  <!-- 布偶貓插畫（純 SVG）：奶油色身體、海豹棕重點色、藍眼睛 -->
+  <svg viewBox="0 0 240 200" role="img" aria-label="布偶貓嘎逼的插畫">
+    <ellipse cx="120" cy="182" rx="80" ry="10" fill="#e6d3bb"/>
+    <path d="M40 150 Q40 95 120 95 Q200 95 200 150 Q200 185 120 185 Q40 185 40 150Z" fill="#fbf6ee" stroke="#e6d3bb" stroke-width="3"/>
+    <path d="M195 150 Q235 140 225 105 Q222 95 214 100 Q220 130 190 138Z" fill="#7d5e4b"/>
+    <path d="M62 52 L52 8 L95 34Z" fill="#4e382d"/><path d="M178 52 L188 8 L145 34Z" fill="#4e382d"/>
+    <path d="M66 46 L60 20 L86 36Z" fill="#a88a74"/><path d="M174 46 L180 20 L154 36Z" fill="#a88a74"/>
+    <ellipse cx="120" cy="78" rx="66" ry="56" fill="#fbf6ee" stroke="#e6d3bb" stroke-width="3"/>
+    <path d="M120 40 Q88 46 78 80 Q86 112 120 118 Q154 112 162 80 Q152 46 120 40Z" fill="#7d5e4b" opacity=".85"/>
+    <path d="M120 58 L108 118 Q120 124 132 118Z" fill="#fbf6ee"/>
+    <ellipse cx="98" cy="78" rx="11" ry="12" fill="#fff"/><ellipse cx="142" cy="78" rx="11" ry="12" fill="#fff"/>
+    <circle cx="98" cy="79" r="8" fill="#5b8fc7"/><circle cx="142" cy="79" r="8" fill="#5b8fc7"/>
+    <ellipse cx="98" cy="79" rx="2.5" ry="6" fill="#2f2f45"/><ellipse cx="142" cy="79" rx="2.5" ry="6" fill="#2f2f45"/>
+    <circle cx="101" cy="75" r="2" fill="#fff"/><circle cx="145" cy="75" r="2" fill="#fff"/>
+    <path d="M115 100 L125 100 L120 106Z" fill="#c98a8a"/>
+    <path d="M120 106 Q114 112 108 109 M120 106 Q126 112 132 109" stroke="#4e382d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M70 100 L40 96 M70 106 L42 110 M170 100 L200 96 M170 106 L198 110" stroke="#a88a74" stroke-width="1.6" stroke-linecap="round"/>
+    <ellipse cx="88" cy="176" rx="16" ry="9" fill="#fff" stroke="#e6d3bb" stroke-width="2"/>
+    <ellipse cx="152" cy="176" rx="16" ry="9" fill="#fff" stroke="#e6d3bb" stroke-width="2"/>
+  </svg>
+  <h1 id="title">嘎逼的成長相簿</h1>
+  <p id="subtitle">從小小一隻到現在，一天一天長大</p>
+</header>
+
+<nav class="progress" aria-label="成長進度">
+  <div class="wrap">
+    <span id="nowLabel">載入中…</span>
+    <div class="bar" role="progressbar" aria-label="時間進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barFill"></i></div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div id="status" class="status" role="status">照片載入中…</div>
+  <div id="timeline" class="timeline" aria-label="照片時間軸"></div>
+</main>
+
+<dialog id="viewer" aria-label="照片大圖">
+  <div class="vbody">
+    <div class="vbar">
+      <strong id="vDate"></strong>
+      <span>
+        <button type="button" class="small ghost" id="vPrev" aria-label="上一張">‹ 上一張</button>
+        <button type="button" class="small ghost" id="vNext" aria-label="下一張">下一張 ›</button>
+        <button type="button" class="small" id="vClose" aria-label="關閉">關閉</button>
+      </span>
+    </div>
+    <div class="vimg"><img id="vImg" alt=""></div>
+  </div>
+</dialog>
+
+<footer class="wrap">
+  <div>作者：帥　修改日期：2026-11-16 20:18</div>
+  <div>製作日期：2026-11-14 09:03　·　GROK 輔助</div>
+  <div>更新：拿掉留言功能、生日防呆</div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+var C = window.GABI_CONFIG || {};
+var $ = function(id){ return document.getElementById(id); };
+var photos = [], cur = -1, loadedOk = false, birthdayOk = null, birthdayErr = '';
+
+document.title = C.CAT_NAME + '的成長相簿';
+$('title').textContent = C.CAT_NAME + '的成長相簿';
+
+function status(text, isErr){
+  var s = $('status');
+  if (!text) { s.hidden = true; return; }
+  s.hidden = false; s.textContent = text; s.className = 'status' + (isErr ? ' err' : '');
+}
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function fmtDate(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+/* ---------- 照片日期：相機拍攝時間 → 檔名日期 → 上傳時間 ---------- */
+function photoDate(f){
+  var t = f.imageMediaMetadata && f.imageMediaMetadata.time;
+  var m = t && /^(\d{4})[:\-](\d{2})[:\-](\d{2})[ T](\d{2}):(\d{2})/.exec(t);
+  if (m && +m[1] > 1990) return { d: new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]), src: 'exif' };
+  m = /(20\d{2})[-_.]?(0[1-9]|1[0-2])[-_.]?(0[1-9]|[12]\d|3[01])/.exec(f.name || '');
+  if (m) return { d: new Date(+m[1], m[2] - 1, +m[3], 12, 0), src: 'name' };
+  return { d: new Date(f.createdTime), src: 'upload' };
+}
+function dayKey(d){ return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+function checkBirthdayInput(){
+  birthdayOk = null; birthdayErr = '';
+  var raw = String(C.CAT_BIRTHDAY == null ? '' : C.CAT_BIRTHDAY).trim();
+  if (!raw) return;
+  var hint = '請填 YYYY-MM-DD（例：2024-11-01），且不可晚於今天。';
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!m) { birthdayErr = '生日格式不對：' + hint; return; }
+  var y = +m[1], mo = +m[2], d = +m[3];
+  var b = new Date(y, mo - 1, d);
+  if (b.getFullYear() !== y || b.getMonth() !== mo - 1 || b.getDate() !== d) { birthdayErr = '生日日期不存在：' + hint; return; }
+  var now = new Date();
+  if (dayKey(b) > dayKey(now)) { birthdayErr = '生日不可晚於今天：' + hint; return; }
+  birthdayOk = b;
+}
+function showBirthdayHint(){
+  if (birthdayErr) { status(birthdayErr, true); return; }
+  if (!birthdayOk || !photos.length) return;
+  var latest = photos[photos.length - 1].date;
+  if (dayKey(birthdayOk) > dayKey(latest)) status('生日晚於所有照片日期，請確認生日是否填錯。', true);
+}
+function ageLabel(d){
+  if (!birthdayOk) return '';
+  var b = birthdayOk;
+  var months = (d.getFullYear() - b.getFullYear()) * 12 + (d.getMonth() - b.getMonth()) - (d.getDate() < b.getDate() ? 1 : 0);
+  if (months < 0) return '';
+  if (months < 1) return '剛出生';
+  if (months < 12) return months + ' 個月大';
+  return Math.floor(months / 12) + ' 歲' + (months % 12 ? ' ' + (months % 12) + ' 個月' : '');
+}
+function thumbUrl(id, w){ return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + w; }
+function altUrl(id, w){ return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w' + w; }
+
+/* ---------- 讀 Google 雲端資料夾 ---------- */
+function driveErr(res, body){
+  var msg = JSON.stringify(body || {});
+  if (/API_KEY_HTTP_REFERRER_BLOCKED|referer|referrer/i.test(msg)) return '這個網址不在 API 金鑰允許的網址內（請在 Google Cloud 金鑰限制加上本站網址）。';
+  if (/accessNotConfigured|SERVICE_DISABLED|has not been used/i.test(msg)) return 'Google Drive API 還沒啟用（請到 Google Cloud 啟用「Google Drive API」）。';
+  if (/API key not valid|keyInvalid|API_KEY_INVALID/i.test(msg)) return 'API 金鑰不正確，請檢查設定區的 DRIVE_API_KEY。';
+  if (res.status === 404) return '找不到資料夾，或資料夾沒有設成「知道連結的任何人都能檢視」。';
+  if (res.status === 403 || res.status === 429) return 'Google 暫時拒絕讀取（可能是用量太多），請稍後再重新整理。';
+  return '讀取照片失敗（錯誤碼 ' + res.status + '），請稍後再試。';
+}
+async function loadDrive(){
+  if (!C.DRIVE_FOLDER_ID || !C.DRIVE_API_KEY) throw new Error('網站還沒設定：請在檔案最上方設定區填入 DRIVE_FOLDER_ID 和 DRIVE_API_KEY。');
+  if (!/^[\w-]{10,}$/.test(C.DRIVE_FOLDER_ID)) throw new Error('DRIVE_FOLDER_ID 格式不對：只要貼資料夾網址最後那一串，不要整個網址。');
+  var all = [], token = '', guard = 0;
+  do {
+    var p = new URLSearchParams({
+      q: "'" + C.DRIVE_FOLDER_ID + "' in parents and mimeType contains 'image/' and trashed = false",
+      fields: 'nextPageToken,files(id,name,createdTime,imageMediaMetadata(time))',
+      pageSize: '1000', key: C.DRIVE_API_KEY
+    });
+    if (token) p.set('pageToken', token);
+    var res = await fetch('https://www.googleapis.com/drive/v3/files?' + p.toString());
+    var body = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(driveErr(res, body));
+    all = all.concat(body.files || []);
+    token = body.nextPageToken || '';
+  } while (token && ++guard < 20);
+  if (!all.length) {
+    // 分辨「資料夾不公開」或「資料夾是空的」
+    var r2 = await fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(C.DRIVE_FOLDER_ID) + '?fields=id&key=' + encodeURIComponent(C.DRIVE_API_KEY));
+    if (!r2.ok) { var b2 = await r2.json().catch(function(){ return {}; }); throw new Error(driveErr(r2, b2)); }
+    throw new Error('資料夾裡還沒有照片。把照片丟進雲端的「' + C.CAT_NAME + '」資料夾，重新整理就會出現。');
+  }
+  return all.map(function(f){ var pd = photoDate(f); return { id: f.id, name: f.name, date: pd.d, src: pd.src }; })
+            .filter(function(p){ return !isNaN(p.date); })
+            .sort(function(a, b){ return a.date - b.date || (a.name > b.name ? 1 : -1); });
+}
+
+/* ---------- 時間軸 ---------- */
+function render(){
+  var tl = $('timeline'); tl.textContent = '';
+  var list = photos;
+  if (loadedOk && !list.length) { status('目前沒有可顯示的照片。'); return; }
+  var groups = [], key = '';
+  list.forEach(function(p){
+    var k = p.date.getFullYear() + '-' + pad(p.date.getMonth() + 1);
+    if (k !== key) { groups.push({ k: k, d: p.date, items: [] }); key = k; }
+    groups[groups.length - 1].items.push(p);
+  });
+  groups.forEach(function(g, gi){
+    var sec = document.createElement('section'); sec.className = 'month';
+    var age = ageLabel(g.d);
+    sec.dataset.label = g.d.getFullYear() + ' 年 ' + (g.d.getMonth() + 1) + ' 月' + (age ? '・' + age : '');
+    sec.dataset.idx = gi; sec.dataset.total = groups.length;
+    var h = document.createElement('h2');
+    h.textContent = g.d.getFullYear() + ' 年 ' + (g.d.getMonth() + 1) + ' 月';
+    var sm = document.createElement('small'); sm.textContent = (age ? age + '・' : '') + g.items.length + ' 張';
+    h.appendChild(sm); sec.appendChild(h);
+    var grid = document.createElement('div'); grid.className = 'grid';
+    g.items.forEach(function(p){
+      var b = document.createElement('button'); b.type = 'button';
+      b.className = 'thumb';
+      b.setAttribute('aria-label', '看大圖：' + fmtDate(p.date));
+      var img = document.createElement('img');
+      img.loading = 'lazy'; img.decoding = 'async';
+      img.alt = C.CAT_NAME + ' ' + fmtDate(p.date) + ' 的照片';
+      img.src = thumbUrl(p.id, 400);
+      img.onerror = function(){ if (!img.dataset.f) { img.dataset.f = 1; img.src = altUrl(p.id, 400); } };
+      b.appendChild(img);
+      var d = document.createElement('span'); d.className = 'd'; d.textContent = (p.date.getMonth() + 1) + '/' + p.date.getDate(); b.appendChild(d);
+      b.addEventListener('click', function(){ openViewer(p.id); });
+      grid.appendChild(b);
+    });
+    sec.appendChild(grid); tl.appendChild(sec);
+  });
+  status('');
+  updateProgress();
+}
+function updateProgress(){
+  var secs = document.querySelectorAll('.month');
+  if (!secs.length) { $('nowLabel').textContent = loadedOk ? '沒有照片' : '—'; return; }
+  var pick = secs[0], top = 70;
+  for (var i = 0; i < secs.length; i++) { if (secs[i].getBoundingClientRect().top <= top) pick = secs[i]; }
+  var total = +pick.dataset.total, idx = +pick.dataset.idx;
+  var pct = total > 1 ? Math.round(idx / (total - 1) * 100) : 100;
+  $('nowLabel').textContent = pick.dataset.label;
+  $('barFill').style.width = pct + '%';
+  document.querySelector('.bar').setAttribute('aria-valuenow', pct);
+}
+var ticking = false;
+window.addEventListener('scroll', function(){ if (!ticking) { ticking = true; requestAnimationFrame(function(){ ticking = false; updateProgress(); }); } }, { passive: true });
+
+/* ---------- 大圖 ---------- */
+var dlg = $('viewer');
+function openViewer(id){
+  cur = photos.findIndex(function(p){ return p.id === id; });
+  if (cur < 0) return;
+  showCur();
+  if (dlg.showModal) { if (!dlg.open) dlg.showModal(); } else dlg.setAttribute('open', '');
+}
+function showCur(){
+  var p = photos[cur]; if (!p) return;
+  var img = $('vImg'); img.removeAttribute('data-f');
+  img.alt = C.CAT_NAME + ' ' + fmtDate(p.date) + ' 的大圖';
+  img.src = thumbUrl(p.id, 1600);
+  img.onerror = function(){ if (!img.dataset.f) { img.dataset.f = 1; img.src = altUrl(p.id, 1600); } };
+  var age = ageLabel(p.date);
+  $('vDate').textContent = fmtDate(p.date) + (age ? '・' + age : '') + (p.src === 'upload' ? '（上傳日）' : '');
+  $('vPrev').disabled = cur <= 0; $('vNext').disabled = cur >= photos.length - 1;
+}
+function closeViewer(){ if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
+$('vClose').onclick = closeViewer;
+$('vPrev').onclick = function(){ if (cur > 0) { cur--; showCur(); } };
+$('vNext').onclick = function(){ if (cur < photos.length - 1) { cur++; showCur(); } };
+dlg.addEventListener('click', function(e){ if (e.target === dlg) closeViewer(); });
+document.addEventListener('keydown', function(e){
+  if (!dlg.open) return;
+  if (e.key === 'ArrowLeft') $('vPrev').click();
+  if (e.key === 'ArrowRight') $('vNext').click();
+});
+
+/* ---------- 啟動 ---------- */
+checkBirthdayInput();
+(async function start(){
+  try { photos = await loadDrive(); loadedOk = true; render(); showBirthdayHint(); }
+  catch (e) { status(e.message, true); $('nowLabel').textContent = '—'; }
+})();
+})();
+</script>
+</body>
+</html>
